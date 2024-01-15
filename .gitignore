@@ -3,6 +3,9 @@ build
 .env
 .env.*
 !.env.example
+
+logs
+
 #lock files
 pnpm-lock.yaml
 package-lock.json
