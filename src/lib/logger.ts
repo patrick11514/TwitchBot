@@ -1,13 +1,31 @@
 import clc from 'cli-color'
-import strip from 'strip-color'
 import fs from 'fs'
+import strip from 'strip-color'
+
+type color =
+    | 'blackBright'
+    | 'redBright'
+    | 'greenBright'
+    | 'yellowBright'
+    | 'blueBright'
+    | 'magentaBright'
+    | 'cyanBright'
+    | 'whiteBright'
+    | 'black'
+    | 'red'
+    | 'green'
+    | 'yellow'
+    | 'blue'
+    | 'magenta'
+    | 'cyan'
+    | 'white'
 
 class Logger {
     name: string
-    color: string
+    color: color
     time: number = 0
 
-    constructor(name: string, color = 'yellow') {
+    constructor(name: string, color: color = 'yellow') {
         this.name = name
         this.color = color
     }
@@ -37,7 +55,6 @@ class Logger {
         this.logToFile(
             `${clc.white('[')}${clc.green(this.getTime())}${clc.white(']')} ${clc.white('[')}${clc.blue(
                 'INFO',
-                //@ts-ignore
             )}${clc.white(']')} ${clc.white('[')}${clc[this.color](this.name)}${clc.white(']')} ${message}`,
         )
     }
@@ -51,7 +68,6 @@ class Logger {
         this.logToFile(
             `${clc.white('[')}${clc.green(this.getTime())}${clc.white(']')} ${clc.white('[')}${clc.blue(
                 'INFO',
-                //@ts-ignore
             )}${clc.white(']')} ${clc.white('[')}${clc[this.color](this.name)}${clc.white(']')} ${message}`,
         )
     }
@@ -67,7 +83,6 @@ class Logger {
         this.logToFile(
             `${clc.white('[')}${clc.green(this.getTime())}${clc.white(']')} ${clc.white('[')}${clc.blue(
                 'INFO',
-                //@ts-ignore
             )}${clc.white(']')} ${clc.white('[')}${clc[this.color](this.name)}${clc.white(']')} ${message} ${clc.white(
                 `(${ms} ms)`,
             )}`,
@@ -85,7 +100,6 @@ class Logger {
         this.logToFile(
             `${clc.white('[')}${clc.green(this.getTime())}${clc.white(']')} ${clc.white('[')}${clc.red(
                 'ERROR',
-                //@ts-ignore
             )}${clc.white(']')} ${clc.white('[')}${clc[this.color](this.name)}${clc.white(']')} ${clc.red(
                 message,
             )} ${clc.white(`(${ms} ms)`)}`,
@@ -100,7 +114,6 @@ class Logger {
         this.logToFile(
             `${clc.white('[')}${clc.green(this.getTime())}${clc.white(']')} ${clc.white('[')}${clc.red(
                 'ERROR',
-                //@ts-ignore
             )}${clc.white(']')} ${clc.white('[')}${clc[this.color](this.name)}${clc.white(']')} ${clc.red(message)}`,
         )
     }
