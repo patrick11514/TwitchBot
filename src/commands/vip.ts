@@ -18,7 +18,7 @@ let cachedVips: Record<
 > = {}
 
 const updateEvery = 5 * 60 * 1000
-const toLoseVip = 1 * 24 * 60 * 60 * 60 * 1000
+const toLoseVip = 7 * 24 * 60 * 60 * 1000
 
 const checkVips = async () => {
     l.start('Updating VIPs')
