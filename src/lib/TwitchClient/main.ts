@@ -12,10 +12,13 @@ export type Events = {
 }
 
 export const userId = '1018399577'
+export const broadcasterId = '167983954'
+
+export const server = new ExpressServer()
 
 export class TwitchClient extends EventEmitter<Events> {
     client: ChatClient
-    private l = new Logger('TwitchClient', 'blue')
+    l = new Logger('TwitchClient', 'blue')
     private channel: string
 
     constructor(channel: string) {
@@ -24,6 +27,11 @@ export class TwitchClient extends EventEmitter<Events> {
         this.client = new ChatClient({
             username: env.TWITCH_USERNAME,
             password: env.TWITCH_PASSWORD,
+            connectionRateLimits: {
+                parallelConnections: 10,
+                releaseTime: 3000,
+            },
+            ignoreUnhandledPromiseRejections: true,
         })
 
         this.l.start('Connecting to Twitch IRC')
@@ -49,8 +57,6 @@ export class TwitchClient extends EventEmitter<Events> {
         this.client.connect()
         this.client.join(channel)
         this.channel = channel
-
-        new ExpressServer()
     }
 
     reply(messageId: string, message: string) {

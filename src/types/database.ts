@@ -8,6 +8,7 @@ export interface Vips {
   activeVip: Generated<number>;
   id: string;
   lastActivity: Generated<Date>;
+  username: string;
 }
 
 export interface DB {
