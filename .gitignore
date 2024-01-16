@@ -5,6 +5,7 @@ build
 !.env.example
 
 logs
+token.json
 
 #lock files
 pnpm-lock.yaml
