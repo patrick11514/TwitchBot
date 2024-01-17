@@ -1,3 +1,4 @@
+import { client } from '..'
 import { endpoints } from '../lib/TwitchEndpoint'
 import Logger from '../lib/logger'
 import { MemoryStorage } from '../lib/memStorage'
@@ -42,6 +43,7 @@ const checkVips = async () => {
             if (remove === true) {
                 removed.push(vip.id)
                 await db.updateTable('vips').set('activeVip', 0).where('id', '=', vip.id).execute()
+                client.send(`@${vip.username} bylo ti odebráno VIP.`)
                 continue
             }
 
@@ -53,18 +55,18 @@ const checkVips = async () => {
         }
     }
 
+    cachedVips = {}
+
+    allCurrentVips.forEach((vip) => {
+        cachedVips[vip.id] = vip
+    })
+
     if (removed.length > 0) {
         l.log(`Removed vip of: ${removed.join(', ')}`)
     } else if (Object.keys(allWritten).length == 0) {
         l.stop('No VIPs to update')
         return
     }
-
-    cachedVips = {}
-
-    allCurrentVips.forEach((vip) => {
-        cachedVips[vip.id] = vip
-    })
 
     //check all vips, that have activity in the last 5 minutes
     for (const vip of allCurrentVips.filter((vip) => Object.keys(allWritten).includes(vip.id))) {
@@ -186,21 +188,35 @@ export const events: Event<any>[] = [
         }
     }),
 
-    new Event('message', async (msg) => {
-        const userId = msg.user.id
+    new Event('leave', async (data) => {
+        if (!data.isUserFetched()) {
+            await data.fetchUser()
+        }
 
-        vipStorage.add(userId, Date.now())
+        if (!data.user) return
+
+        vipStorage.add(data.user.id, Date.now())
+    }),
+
+    new Event('join', async (data) => {
+        if (!data.isUserFetched()) {
+            await data.fetchUser()
+        }
+
+        if (!data.user) return
+
+        const userId = data.user.id
 
         if (userId in cachedVips && cachedVips[userId].activeVip == 0) {
             if (addingVip.includes(userId)) return
 
             //give vip
             try {
-                addingVip.push(msg.user.id)
+                addingVip.push(data.user.id)
                 const response = await endpoints.vip.add(userId)
 
                 if (response === true) {
-                    msg.reply(`@${msg.user.username} bylo ti navráceno VIP.`)
+                    data.client.send(`@${data.user.username} bylo ti navráceno VIP.`)
                     db.updateTable('vips').set('activeVip', 1).where('id', '=', userId).execute()
                     addingVip = addingVip.filter((id) => id != userId)
                     cachedVips[userId].activeVip = 1
@@ -208,15 +224,15 @@ export const events: Event<any>[] = [
                 }
 
                 if (response === undefined) {
-                    msg.client.send(`@PatrikMint nemáš platný token (:`)
+                    data.client.send(`@PatrikMint nemáš platný token (:`)
                     addingVip = addingVip.filter((id) => id != userId)
                     return
                 }
 
-                msg.reply(`@${msg.user.username} nepodařilo se ti vrátit VIP.`)
-                msg.client.l.error('Unable to add VIP: ' + JSON.stringify(response))
+                data.client.send(`@${data.user.username} nepodařilo se ti vrátit VIP.`)
+                data.client.l.error('Unable to add VIP: ' + JSON.stringify(response))
             } catch (e) {
-                msg.client.l.error('Unable to send message to chat: ' + e)
+                data.client.l.error('Unable to send message to chat: ' + e)
             }
             addingVip = addingVip.filter((id) => id != userId)
         }

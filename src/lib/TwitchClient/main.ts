@@ -2,6 +2,8 @@ import { ChatClient } from '@kararty/dank-twitch-irc'
 import { env } from '../../types/env'
 import { EventEmitter } from '../EventEmitter'
 import Logger from '../logger'
+import { Join } from './Events/Join'
+import { Leave } from './Events/Leave'
 import { ExpressServer } from './ExpressServer'
 import { CheerMessage } from './Message/CheerMessage'
 import { Message } from './Message/Message'
@@ -9,6 +11,8 @@ import { ReplyMessage } from './Message/ReplyMessage'
 
 export type Events = {
     message: (message: Message) => void
+    join: (join: Join) => void
+    leave: (leave: Leave) => void
 }
 
 export const userId = '1018399577'
@@ -32,6 +36,7 @@ export class TwitchClient extends EventEmitter<Events> {
                 releaseTime: 3000,
             },
             ignoreUnhandledPromiseRejections: true,
+            requestMembershipCapability: true,
         })
 
         this.l.start('Connecting to Twitch IRC')
@@ -40,6 +45,20 @@ export class TwitchClient extends EventEmitter<Events> {
             this.l.stop('Connected to Twitch IRC')
         })
 
+        this.initializeEvents()
+
+        this.client.connect()
+        this.client.join(channel)
+        this.channel = channel
+    }
+
+    private initializeEvents() {
+        this.messageEvent()
+        this.joinEvent()
+        this.leaveEvent()
+    }
+
+    private messageEvent() {
         this.client.on('PRIVMSG', (msg) => {
             let message: Message
 
@@ -53,10 +72,22 @@ export class TwitchClient extends EventEmitter<Events> {
 
             this.emit('message', message)
         })
+    }
 
-        this.client.connect()
-        this.client.join(channel)
-        this.channel = channel
+    private joinEvent() {
+        this.client.on('JOIN', (data) => {
+            const join = new Join(data, this)
+
+            this.emit('join', join)
+        })
+    }
+
+    private leaveEvent() {
+        this.client.on('PART', (data) => {
+            const leave = new Leave(data, this)
+
+            this.emit('leave', leave)
+        })
     }
 
     reply(messageId: string, message: string) {
