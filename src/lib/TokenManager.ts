@@ -68,7 +68,12 @@ export class TokenManager {
                 })
             } catch (_) {}
         }
-        setInterval(this.checkToken, 10 * 60 * 1000)
+        setInterval(
+            () => {
+                this.checkToken()
+            },
+            10 * 60 * 1000,
+        )
     }
 
     async fetchToken(data: Token) {
