@@ -88,7 +88,7 @@ let addingVip: string[] = []
 
 export const events: Event<any>[] = [
     new Event('message', async (msg) => {
-        if (!msg.user.isBroadcaster) {
+        if (!msg.user.isBroadcaster && !msg.user.isMod) {
             return
         }
 
@@ -106,7 +106,7 @@ export const events: Event<any>[] = [
 
         const { command, args } = parsed
 
-        switch (command) {
+        switch (command.toLowerCase()) {
             case 'vip': {
                 if (!msg.isReplyMessage()) return
 
@@ -182,6 +182,27 @@ export const events: Event<any>[] = [
                 }
 
                 msg.reply(`@${msg.user.username} nepodařilo se odebrat VIP.`)
+
+                break
+            }
+            case 'getid': {
+                if (args.length == 0) return
+
+                let username = args[0]
+                if (username.startsWith('@')) username = username.slice(1)
+
+                const data = await db
+                    .selectFrom('vips')
+                    .select('id')
+                    .where('username', '=', username)
+                    .executeTakeFirst()
+
+                if (!data) {
+                    msg.reply(`@${msg.user.username} není VIP.`)
+                    return
+                }
+
+                msg.reply(`@${username} má id: ${data.id}`)
 
                 break
             }
