@@ -25,6 +25,8 @@ export class TwitchClient extends EventEmitter<Events> {
     l = new Logger('TwitchClient', 'blue')
     private channel: string
 
+    activeUsers: string[] = []
+
     constructor(channel: string) {
         super()
 
@@ -78,6 +80,8 @@ export class TwitchClient extends EventEmitter<Events> {
         this.client.on('JOIN', (data) => {
             const join = new Join(data, this)
 
+            this.activeUsers.push(data.joinedUsername)
+
             this.emit('join', join)
         })
     }
@@ -85,6 +89,8 @@ export class TwitchClient extends EventEmitter<Events> {
     private leaveEvent() {
         this.client.on('PART', (data) => {
             const leave = new Leave(data, this)
+
+            this.activeUsers = this.activeUsers.filter((user) => user !== data.partedUsername)
 
             this.emit('leave', leave)
         })
