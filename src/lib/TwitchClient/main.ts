@@ -20,6 +20,8 @@ export const broadcasterId = '167983954'
 
 export const server = new ExpressServer()
 
+export const debugLogger = new Logger('Debug', 'magenta', true)
+
 export class TwitchClient extends EventEmitter<Events> {
     client: ChatClient
     l = new Logger('TwitchClient', 'blue')
@@ -72,6 +74,10 @@ export class TwitchClient extends EventEmitter<Events> {
                 message = new Message(msg, this)
             }
 
+            if (env.TWITCH_DEBUG) {
+                debugLogger.log(message)
+            }
+
             this.emit('message', message)
         })
     }
@@ -79,6 +85,14 @@ export class TwitchClient extends EventEmitter<Events> {
     private joinEvent() {
         this.client.on('JOIN', (data) => {
             const join = new Join(data, this)
+
+            if (env.TWITCH_DEBUG) {
+                this.l
+            }
+
+            if (env.TWITCH_DEBUG) {
+                debugLogger.log(join)
+            }
 
             this.activeUsers.push(data.joinedUsername)
 
@@ -89,6 +103,10 @@ export class TwitchClient extends EventEmitter<Events> {
     private leaveEvent() {
         this.client.on('PART', (data) => {
             const leave = new Leave(data, this)
+
+            if (env.TWITCH_DEBUG) {
+                debugLogger.log(leave)
+            }
 
             this.activeUsers = this.activeUsers.filter((user) => user !== data.partedUsername)
 

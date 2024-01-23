@@ -13,6 +13,7 @@ const schema = z.object({
     APP_SECRET: z.string(),
     SERVER_PORT: z.coerce.number(),
     SERVER_URL: z.string(),
+    TWITCH_DEBUG: z.coerce.number().default(0),
 })
 
 export const env = schema.parse(process.env)
