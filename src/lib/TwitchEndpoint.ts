@@ -96,7 +96,13 @@ export const endpoints = {
             )
         },
     },
-    getChannelInfo: async (userName: string) => {
-        return twitchEndpoint(`https://api.twitch.tv/helix/users?login=${userName}`, {}, 200, 'GET', true)
+    getChannelInfo: async (userName: string | string[]) => {
+        return twitchEndpoint(
+            `https://api.twitch.tv/helix/users?login=${typeof userName === 'string' ? userName : userName.join(',')}`,
+            {},
+            200,
+            'GET',
+            true,
+        )
     },
 } satisfies EndpointList
