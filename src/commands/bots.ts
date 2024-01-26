@@ -29,7 +29,7 @@ export const events: Event<any>[] = [
                     return msg.reply(`@${msg.user.username} Bot s tímto jménem již existuje!`)
                 }
 
-                const result = manager.add(botName)
+                const result = await manager.add(botName)
 
                 if (!result) {
                     return msg.reply(`@${msg.user.username} Bot s tímto jménem neexistuje!`)
@@ -53,7 +53,7 @@ export const events: Event<any>[] = [
                     return msg.reply(`@${msg.user.username} Bot s tímto jménem neexistuje!`)
                 }
 
-                const result = manager.remove(botName)
+                const result = await manager.remove(botName)
 
                 if (!result) {
                     return msg.reply(`@${msg.user.username} Bot s tímto jménem neexistuje!`)
