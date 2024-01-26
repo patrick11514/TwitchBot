@@ -1,24 +1,7 @@
-import { z } from 'zod'
-import { endpoints } from '../../TwitchEndpoint'
+import { TwitchUserDetailSchema, endpoints } from '../../TwitchEndpoint'
 import Logger from '../../logger'
 import { PartialUser } from '../User/PartialUser'
 import { TwitchClient } from '../main'
-
-const schema = z.array(
-    z.object({
-        id: z.string(),
-        login: z.string(),
-        display_name: z.string(),
-        type: z.string(),
-        broadcaster_type: z.string(),
-        description: z.string(),
-        profile_image_url: z.string(),
-        offline_image_url: z.string(),
-        view_count: z.number(),
-        email: z.string().optional(),
-        created_at: z.string(),
-    }),
-)
 
 export class BaseEvent {
     user: PartialUser | undefined
@@ -55,7 +38,7 @@ export class BaseEvent {
             return false
         }
 
-        const parsed = schema.safeParse(endpoint.data)
+        const parsed = TwitchUserDetailSchema.safeParse(endpoint.data)
 
         if (!parsed.success) {
             this.l.error(parsed.error)
