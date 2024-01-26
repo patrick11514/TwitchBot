@@ -1,5 +1,5 @@
 import { Color, PrivmsgMessage } from '@kararty/dank-twitch-irc'
-import { TwitchClient, userId } from '../main'
+import { TwitchClient } from '../main'
 import { PartialUser } from './PartialUser'
 
 class Tags {
@@ -50,10 +50,6 @@ export class User extends PartialUser {
         this.isSubscriber = tags.includes('subscriber') && tags.get('subscriber') == '1'
         this.isVip = tags.includes('vip') && tags.get('vip') == '1'
         this.isTurbo = tags.includes('turbo') && tags.get('turbo') == '1'
-    }
-
-    isBot() {
-        return this.id === userId
     }
 
     isPartialUser(): this is PartialUser {
