@@ -77,6 +77,9 @@ export class TokenManager {
     }
 
     async fetchToken(data: Token) {
+        const l = new Logger('TokenManager', 'yellow')
+        l.start('Fetching token...')
+
         const request = await fetch('https://id.twitch.tv/oauth2/token', {
             method: 'POST',
             headers: {
@@ -94,11 +97,11 @@ export class TokenManager {
                 const error = errorResponse.safeParse(json)
 
                 if (!error.success) {
-                    this.l.error(`Unable to parse token response: ${JSON.stringify(json)}`)
+                    l.stopError(`Unable to parse token response: ${JSON.stringify(json)}`)
                     return
                 }
 
-                this.l.error(`Error while fetching token: ${error.data.message}`)
+                l.stopError(`Error while fetching token: ${error.data.message}`)
                 return
             }
 
@@ -106,8 +109,10 @@ export class TokenManager {
             this.token = tokenData.data
 
             writeFileSync('token.json', JSON.stringify(tokenData.data))
+
+            l.stop('Token fetched')
         } catch (e) {
-            this.l.error(`Unable to parse token response: ${e}`)
+            l.stopError(`Unable to parse token response: ${e}`)
         }
     }
 
