@@ -1,5 +1,6 @@
 import { ChatClient } from '@kararty/dank-twitch-irc'
 import { env } from '../../types/env'
+import { BotManager } from '../BotManager'
 import { EventEmitter } from '../EventEmitter'
 import Logger from '../logger'
 import { Join } from './Events/Join'
@@ -15,7 +16,6 @@ export type Events = {
     leave: (leave: Leave) => void
 }
 
-export const userId = '1018399577'
 export const broadcasterId = '167983954'
 
 export const server = new ExpressServer()
@@ -26,11 +26,14 @@ export class TwitchClient extends EventEmitter<Events> {
     client: ChatClient
     l = new Logger('TwitchClient', 'blue')
     private channel: string
+    botManager: BotManager
 
     activeUsers: string[] = []
 
     constructor(channel: string) {
         super()
+
+        this.botManager = new BotManager(this)
 
         this.client = new ChatClient({
             username: env.TWITCH_USERNAME,

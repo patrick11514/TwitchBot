@@ -5,6 +5,7 @@ export class PartialUser {
     readonly username: string
     readonly displayName: string
     readonly client: TwitchClient
+    readonly isBot: boolean
 
     constructor(
         msg: {
@@ -18,6 +19,8 @@ export class PartialUser {
         this.username = msg.senderUsername
         this.displayName = msg.displayName
         this.client = client
+
+        client.botManager.isBot(this.id) ? (this.isBot = true) : (this.isBot = false)
     }
 
     isPartialUser(): this is PartialUser {

@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { env } from '../types/env'
 import { broadcasterId, server } from './TwitchClient/main'
 
@@ -67,6 +68,22 @@ const twitchEndpoint = async <T extends true | false>(
     }
 }
 
+export const TwitchUserDetailSchema = z.array(
+    z.object({
+        id: z.string(),
+        login: z.string(),
+        display_name: z.string(),
+        type: z.string(),
+        broadcaster_type: z.string(),
+        description: z.string(),
+        profile_image_url: z.string(),
+        offline_image_url: z.string(),
+        view_count: z.number(),
+        email: z.string().optional(),
+        created_at: z.string(),
+    }),
+)
+
 type EndpointList = { [key: string]: EndpointList | Function }
 
 export const endpoints = {
@@ -96,7 +113,13 @@ export const endpoints = {
             )
         },
     },
-    getChannelInfo: async (userName: string) => {
-        return twitchEndpoint(`https://api.twitch.tv/helix/users?login=${userName}`, {}, 200, 'GET', true)
+    getChannelInfo: async (userName: string | string[]) => {
+        return twitchEndpoint(
+            `https://api.twitch.tv/helix/users?login=${typeof userName === 'string' ? userName : userName.join(',')}`,
+            {},
+            200,
+            'GET',
+            true,
+        )
     },
 } satisfies EndpointList
