@@ -1,3 +1,4 @@
+import { DeleteResult } from 'kysely'
 import { client } from '..'
 import { endpoints } from '../lib/TwitchEndpoint'
 import Logger from '../lib/logger'
@@ -153,23 +154,33 @@ export const events: Event<any>[] = [
             case 'unvip': {
                 if (args.length == 0) return
 
-                const id = args[0]
+                const idOrUsername = args[0]
 
-                const data = await db.selectFrom('vips').select('username').where('id', '=', id).executeTakeFirst()
+                const data = await db
+                    .selectFrom('vips')
+                    .select('username')
+                    .where((eb) => eb.or([eb('username', '=', idOrUsername), eb('id', '=', idOrUsername)]))
+                    .executeTakeFirst()
 
                 if (!data) {
                     msg.reply(`@${msg.user.username} není VIP.`)
                     return
                 }
 
-                const del = await db.deleteFrom('vips').where('id', '=', id).executeTakeFirst()
+                let del: DeleteResult
+
+                if (idOrUsername == data.username) {
+                    del = await db.deleteFrom('vips').where('username', '=', idOrUsername).executeTakeFirst()
+                } else {
+                    del = await db.deleteFrom('vips').where('id', '=', idOrUsername).executeTakeFirst()
+                }
 
                 if (del.numDeletedRows != 1n) {
                     msg.reply(`@${msg.user.username} nepodařilo se odebrat VIP.`)
                     return
                 }
 
-                const response = await endpoints.vip.remove(id)
+                const response = await endpoints.vip.remove(idOrUsername)
 
                 if (response === true) {
                     msg.reply(`@${data.username} bylo odebráno VIP.`)
@@ -182,6 +193,7 @@ export const events: Event<any>[] = [
                 }
 
                 msg.reply(`@${msg.user.username} nepodařilo se odebrat VIP.`)
+                l.log('Unable to remove VIP: ' + JSON.stringify(response))
 
                 break
             }
