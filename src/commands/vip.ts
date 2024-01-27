@@ -218,6 +218,18 @@ export const events: Event<any>[] = [
 
                 break
             }
+
+            case 'vips': {
+                const users = await db.selectFrom('vips').selectAll().execute()
+
+                if (users.length == 0) {
+                    return msg.reply(`@${msg.user.username} nejsou žádná VIP.`)
+                }
+
+                const vipUsers = users.map((user) => user.username).join(', ')
+
+                msg.reply(`@${msg.user.username}, zde jsou VIP: ${vipUsers}`)
+            }
         }
     }),
 
