@@ -81,6 +81,8 @@ export class BotManager {
             username: parsed.data[0].login,
         })
 
+        this.syncBots()
+
         return true
     }
 
@@ -94,6 +96,17 @@ export class BotManager {
 
         this.bots = this.bots.filter((bot) => bot.username !== username)
 
+        this.syncBots()
+
         return true
+    }
+
+    syncBots() {
+        this.client.activeUsers = this.client.activeUsers.map((user) => {
+            return {
+                username: user.username,
+                isBot: this.isBot(user.username),
+            }
+        })
     }
 }
