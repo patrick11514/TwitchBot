@@ -22,13 +22,18 @@ export const server = new ExpressServer()
 
 export const debugLogger = new Logger('Debug', 'magenta', true)
 
+type User = {
+    username: string
+    isBot: boolean
+}
+
 export class TwitchClient extends EventEmitter<Events> {
     client: ChatClient
     l = new Logger('TwitchClient', 'blue')
     private channel: string
     botManager: BotManager
 
-    activeUsers: string[] = []
+    activeUsers: User[] = []
 
     constructor(channel: string) {
         super()
@@ -90,14 +95,13 @@ export class TwitchClient extends EventEmitter<Events> {
             const join = new Join(data, this)
 
             if (env.TWITCH_DEBUG) {
-                this.l
-            }
-
-            if (env.TWITCH_DEBUG) {
                 debugLogger.log(join)
             }
 
-            this.activeUsers.push(data.joinedUsername)
+            this.activeUsers.push({
+                username: data.joinedUsername,
+                isBot: this.botManager.isBot(data.joinedUsername),
+            })
 
             this.emit('join', join)
         })
@@ -111,7 +115,7 @@ export class TwitchClient extends EventEmitter<Events> {
                 debugLogger.log(leave)
             }
 
-            this.activeUsers = this.activeUsers.filter((user) => user !== data.partedUsername)
+            this.activeUsers = this.activeUsers.filter((user) => user.username !== data.partedUsername)
 
             this.emit('leave', leave)
         })

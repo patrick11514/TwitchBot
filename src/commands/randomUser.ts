@@ -24,23 +24,34 @@ export const events: Event<any>[] = [
             }
         }
 
-        if (count > msg.client.activeUsers.length) {
-            count = msg.client.activeUsers.length
+        console.log(msg.client.activeUsers)
+
+        const nonBotUsers = msg.client.activeUsers.filter((user) => !user.isBot)
+
+        console.log(nonBotUsers)
+
+        if (nonBotUsers.length == 0) {
+            msg.reply(`@${msg.user.username} Nemám žádné aktivní uživatele`)
+            return
+        }
+
+        if (count > nonBotUsers.length) {
+            count = nonBotUsers.length
         }
 
         const selectedUsers: string[] = []
 
         for (let i = 0; i < count; i++) {
-            const random = Math.floor(Math.random() * msg.client.activeUsers.length)
+            const random = Math.floor(Math.random() * nonBotUsers.length)
 
-            const user = msg.client.activeUsers[random]
+            const user = nonBotUsers[random]
 
-            if (selectedUsers.includes(user)) {
+            if (selectedUsers.includes(user.username)) {
                 i--
                 continue
             }
 
-            selectedUsers.push(user)
+            selectedUsers.push(user.username)
         }
 
         msg.reply(`@${msg.user.username} Vylosoval jsem tyto lidi: ${selectedUsers.join(', ')}`)
