@@ -1,5 +1,7 @@
 import { DeleteResult } from 'kysely'
 import { client } from '..'
+import { Join } from '../lib/TwitchClient/Events/Join'
+import { Message } from '../lib/TwitchClient/Message/Message'
 import { endpoints } from '../lib/TwitchEndpoint'
 import Logger from '../lib/logger'
 import { MemoryStorage } from '../lib/memStorage'
@@ -233,6 +235,13 @@ export const events: Event<any>[] = [
         }
     }),
 
+    new Event('message', async (data) => {
+        const userId = data.user.id
+        if (userId in cachedVips && cachedVips[userId].activeVip == 0) {
+            addVip(data)
+        }
+    }),
+
     new Event('leave', async (data) => {
         if (!data.isUserFetched()) {
             await data.fetchUser()
@@ -253,33 +262,41 @@ export const events: Event<any>[] = [
         const userId = data.user.id
 
         if (userId in cachedVips && cachedVips[userId].activeVip == 0) {
-            if (addingVip.includes(userId)) return
-
-            //give vip
-            try {
-                addingVip.push(data.user.id)
-                const response = await endpoints.vip.add(userId)
-
-                if (response === true) {
-                    data.client.send(`@${data.user.username} bylo ti navráceno VIP.`)
-                    db.updateTable('vips').set('activeVip', 1).where('id', '=', userId).execute()
-                    addingVip = addingVip.filter((id) => id != userId)
-                    cachedVips[userId].activeVip = 1
-                    return
-                }
-
-                if (response === undefined) {
-                    data.client.send(`@PatrikMint nemáš platný token (:`)
-                    addingVip = addingVip.filter((id) => id != userId)
-                    return
-                }
-
-                data.client.send(`@${data.user.username} nepodařilo se ti vrátit VIP.`)
-                data.client.l.error('Unable to add VIP: ' + JSON.stringify(response))
-            } catch (e) {
-                data.client.l.error('Unable to send message to chat: ' + e)
-            }
-            addingVip = addingVip.filter((id) => id != userId)
+            addVip(data)
         }
     }),
 ]
+
+const addVip = async (data: Message | Join) => {
+    if (!data.user) return
+
+    const userId = data.user.id
+
+    if (addingVip.includes(userId)) return
+
+    //give vip
+    try {
+        addingVip.push(data.user.id)
+        const response = await endpoints.vip.add(userId)
+
+        if (response === true) {
+            data.client.send(`@${data.user.username} bylo ti navráceno VIP.`)
+            db.updateTable('vips').set('activeVip', 1).where('id', '=', userId).execute()
+            addingVip = addingVip.filter((id) => id != userId)
+            cachedVips[userId].activeVip = 1
+            return
+        }
+
+        if (response === undefined) {
+            data.client.send(`@PatrikMint nemáš platný token (:`)
+            addingVip = addingVip.filter((id) => id != userId)
+            return
+        }
+
+        data.client.send(`@${data.user.username} nepodařilo se ti vrátit VIP.`)
+        data.client.l.error('Unable to add VIP: ' + JSON.stringify(response))
+    } catch (e) {
+        data.client.l.error('Unable to send message to chat: ' + e)
+    }
+    addingVip = addingVip.filter((id) => id != userId)
+}
