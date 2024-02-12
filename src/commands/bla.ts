@@ -11,7 +11,7 @@ export const events: Event<any>[] = [
         }
 
         if (message.includes('bla')) {
-            if (message.includes(' bla') || message.includes('bla ')) {
+            if (message.endsWith(' bla') || message.startsWith('bla ') || message.includes(' bla ')) {
                 includes = true
             }
         }
