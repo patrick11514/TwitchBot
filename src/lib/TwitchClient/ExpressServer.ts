@@ -3,19 +3,11 @@ import { env } from '../../types/env'
 import { TokenManager } from '../TokenManager'
 import Logger from '../logger'
 
-const scopes = ['channel:manage:vips'] as const
+const scopes = ['channel:manage:vips', 'moderator:manage:banned_users'] as const
 
 type Token = {
     code: string
     scope: string
-}
-
-type GrantToken = {
-    access_token: string
-    expires_in: number
-    refresh_token: string
-    scope: string[]
-    token_type: string
 }
 
 export class ExpressServer {
@@ -33,7 +25,7 @@ export class ExpressServer {
                 return
             }
             res.redirect(
-                `https://id.twitch.tv/oauth2/authorize?client_id=${env.APP_ID}&redirect_uri=${env.SERVER_URL}callback&scope=${scopes.join(',')}&response_type=code`,
+                `https://id.twitch.tv/oauth2/authorize?client_id=${env.APP_ID}&redirect_uri=${env.SERVER_URL}callback&scope=${encodeURIComponent(scopes.join(' '))}&response_type=code`,
             )
         })
 
@@ -54,5 +46,9 @@ export class ExpressServer {
 
     getToken() {
         return this.tokenManager.getToken()
+    }
+
+    getUserId() {
+        return this.tokenManager.user_id
     }
 }
