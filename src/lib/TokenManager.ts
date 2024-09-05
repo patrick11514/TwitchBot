@@ -37,6 +37,7 @@ export class TokenManager {
     public status: 'expired' | 'valid' | 'not set' = 'not set'
     private token: GrantToken | null = null
     private l = new Logger('TokenManager', 'yellow')
+    user_id!: string
 
     constructor() {
         if (existsSync('token.json')) {
@@ -193,7 +194,9 @@ export class TokenManager {
                     return false
                 }
 
-                const { client_id, scopes, expires_in } = tokenData.data
+                const { client_id, scopes, expires_in, user_id } = tokenData.data
+
+                this.user_id = user_id
 
                 if (client_id !== env.APP_ID) {
                     this.l.error(`Invalid client id: ${client_id}`)
