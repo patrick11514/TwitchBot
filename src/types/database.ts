@@ -4,6 +4,11 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
 
+export interface BannedPromotions {
+  id: Generated<number>;
+  text: string;
+}
+
 export interface Bots {
   id: string;
   username: string;
@@ -17,6 +22,7 @@ export interface Vips {
 }
 
 export interface DB {
+  banned_promotions: BannedPromotions;
   bots: Bots;
   vips: Vips;
 }
