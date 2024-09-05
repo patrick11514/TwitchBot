@@ -84,8 +84,14 @@ const checkVips = async () => {
     l.stop('VIPs updated')
 }
 
-checkVips()
-setInterval(checkVips, updateEvery)
+const runCheck = () => {
+    checkVips().catch((e) => {
+        l.error('Error in checkVips: ' + e)
+    })
+}
+
+runCheck()
+setInterval(runCheck, updateEvery)
 
 let addingVip: string[] = []
 
