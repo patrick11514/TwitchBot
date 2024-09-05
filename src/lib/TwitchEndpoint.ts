@@ -122,4 +122,21 @@ export const endpoints = {
             true,
         )
     },
+    chat: {
+        ban: async (moderatorId: string, userId: string, duration?: number, reason?: string) => {
+            return twitchEndpoint(
+                `https://api.twitch.tv/helix/moderation/bans/?broadcaster_id=${broadcasterId}&moderator_id=${moderatorId}`,
+                {
+                    data: {
+                        user_id: userId,
+                        reason,
+                        duration,
+                    },
+                },
+                200,
+                'POST',
+                false,
+            )
+        },
+    },
 } satisfies EndpointList
