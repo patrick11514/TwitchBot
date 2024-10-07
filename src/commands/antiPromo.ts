@@ -12,6 +12,8 @@ export const events: Event<any>[] = [
         if (!(msg.user.isMod || msg.user.isBroadcaster)) {
             if (msg.user.isVip) return
 
+            console.log(`Got message from ${msg.user.username} - ${msg.message}`)
+
             const cleaned = clean(msg.message)
             const lower = cleaned.toLocaleLowerCase()
 
