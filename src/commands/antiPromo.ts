@@ -12,8 +12,6 @@ export const events: Event<any>[] = [
         if (!(msg.user.isMod || msg.user.isBroadcaster)) {
             if (msg.user.isVip) return
 
-            console.log(`Got message from ${msg.user.username} - ${msg.message}`)
-
             const cleaned = clean(msg.message)
             const lower = cleaned.toLocaleLowerCase()
 
@@ -55,13 +53,13 @@ export const events: Event<any>[] = [
                     .executeTakeFirst()
 
                 if (data) {
-                    msg.reply('Termín jiz existuje.')
+                    msg.reply('Term already exists.')
                     return
                 }
 
                 await db.insertInto('banned_promotions').values({ text }).execute()
 
-                msg.reply('Termín byl přidán.')
+                msg.reply('Term was added.')
 
                 break
             }
@@ -78,16 +76,21 @@ export const events: Event<any>[] = [
                     .executeTakeFirst()
 
                 if (!data) {
-                    msg.reply('Termín neexistuje')
+                    msg.reply('Term does not exist.')
                     return
                 }
 
                 await db.deleteFrom('banned_promotions').where('text', '=', text).execute()
 
-                msg.reply('Termín byl odebrán')
+                msg.reply('Term was removed.')
 
                 break
             }
+            case 'clean':
+                if (!msg.isReplyMessage()) return
+
+                msg.reply(`Here is cleaned message: ${clean(msg.replyMessage.message)}`)
+                break
         }
     }),
 ]
