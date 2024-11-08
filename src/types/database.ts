@@ -14,6 +14,12 @@ export interface Bots {
   username: string;
 }
 
+export interface Lectures {
+  id: Generated<number>;
+  link: string;
+  name: string;
+}
+
 export interface Vips {
   activeVip: Generated<number>;
   id: string;
@@ -24,5 +30,6 @@ export interface Vips {
 export interface DB {
   banned_promotions: BannedPromotions;
   bots: Bots;
+  lectures: Lectures;
   vips: Vips;
 }
