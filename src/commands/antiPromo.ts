@@ -26,7 +26,7 @@ export const events: Event<any>[] = [
         if (!(msg.user.isMod || msg.user.isBroadcaster)) {
             if (msg.user.isVip) return
 
-            if (!(await checkMessage(msg.message))) {
+            if (await checkMessage(msg.message)) {
                 await endpoints.chat.ban(server.getUserId(), msg.user.id, undefined, 'Promotion detected')
                 console.log(`Banned ${msg.user.username} for promotion`)
             }
