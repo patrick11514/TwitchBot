@@ -5,6 +5,20 @@ import { parseCommand } from '../lib/utils'
 import { Event } from '../loader'
 import { db } from '../types/connection'
 
+const checkMessage = async (msg: string) => {
+    const cleaned = clean(msg)
+    const lower = cleaned.toLocaleLowerCase()
+
+    const blocked = (await db.selectFrom('banned_promotions').select('text').execute()).map((x) => x.text)
+
+    for (const text of blocked) {
+        if (lower.includes(text.toLocaleLowerCase())) {
+            return true
+        }
+    }
+    return false
+}
+
 export const events: Event<any>[] = [
     new Event('message', async (msg) => {
         if (msg.user.isBot) return
@@ -12,18 +26,11 @@ export const events: Event<any>[] = [
         if (!(msg.user.isMod || msg.user.isBroadcaster)) {
             if (msg.user.isVip) return
 
-            const cleaned = clean(msg.message)
-            const lower = cleaned.toLocaleLowerCase()
-
-            const blocked = (await db.selectFrom('banned_promotions').select('text').execute()).map((x) => x.text)
-
-            for (const text of blocked) {
-                if (lower.includes(text.toLocaleLowerCase())) {
-                    await endpoints.chat.ban(server.getUserId(), msg.user.id, undefined, 'Promotion detected')
-                    console.log(`Banned ${msg.user.username} for promotion`)
-                    return
-                }
+            if (!(await checkMessage(msg.message))) {
+                await endpoints.chat.ban(server.getUserId(), msg.user.id, undefined, 'Promotion detected')
+                console.log(`Banned ${msg.user.username} for promotion`)
             }
+
             return
         }
 
@@ -90,6 +97,17 @@ export const events: Event<any>[] = [
                 if (!msg.isReplyMessage()) return
 
                 msg.reply(`Here is cleaned message: ${clean(msg.replyMessage.message)}`)
+                break
+            case 'bannable':
+                if (!msg.isReplyMessage()) return
+
+                if (await checkMessage(msg.replyMessage.message)) {
+                    msg.reply('Ye it will be banned')
+                    return
+                }
+
+                msg.reply('No it will not be banned')
+
                 break
         }
     }),
