@@ -1,14 +1,14 @@
 //Bude spravovat token v token.json + memory a bude se starat o refresh, get (přesun z ExpressServer.ts) atd..
 
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { z } from 'zod'
-import { env } from '../types/env'
-import Logger from './logger'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { z } from 'zod';
+import { env } from '../types/env';
+import Logger from './logger';
 
 type Token = {
-    code: string
-    scope: string
-}
+    code: string;
+    scope: string;
+};
 
 const grantToken = z.object({
     access_token: z.string(),
@@ -16,9 +16,9 @@ const grantToken = z.object({
     refresh_token: z.string(),
     scope: z.array(z.string()),
     token_type: z.string(),
-})
+});
 
-type GrantToken = z.infer<typeof grantToken>
+type GrantToken = z.infer<typeof grantToken>;
 
 const tokenValidation = z.object({
     client_id: z.string(),
@@ -26,60 +26,60 @@ const tokenValidation = z.object({
     scopes: z.array(z.string()),
     user_id: z.string(),
     expires_in: z.number(),
-})
+});
 
 const errorResponse = z.object({
     status: z.number(),
     message: z.string(),
-})
+});
 
 export class TokenManager {
-    public status: 'expired' | 'valid' | 'not set' = 'not set'
-    private token: GrantToken | null = null
-    private l = new Logger('TokenManager', 'yellow')
-    user_id!: string
+    public status: 'expired' | 'valid' | 'not set' = 'not set';
+    private token: GrantToken | null = null;
+    private l = new Logger('TokenManager', 'yellow');
+    user_id!: string;
 
     constructor() {
         if (existsSync('token.json')) {
-            this.l.start('Loading token...')
-            const data = readFileSync('token.json', 'utf-8')
+            this.l.start('Loading token...');
+            const data = readFileSync('token.json', 'utf-8');
             try {
-                const json = JSON.parse(data)
+                const json = JSON.parse(data);
 
-                const properties = ['access_token', 'expires_in', 'refresh_token', 'scope', 'token_type'] as const
+                const properties = ['access_token', 'expires_in', 'refresh_token', 'scope', 'token_type'] as const;
 
                 for (const property of properties) {
                     if (!(property in json)) {
-                        this.status = 'not set'
-                        return
+                        this.status = 'not set';
+                        return;
                     }
                 }
 
-                this.token = json as GrantToken
+                this.token = json as GrantToken;
 
                 //check if token is valid
                 this.validateToken(json.access_token).then((valid) => {
                     if (!valid) {
-                        this.token = null
-                        this.l.stopError('Token is invalid')
+                        this.token = null;
+                        this.l.stopError('Token is invalid');
                     } else {
-                        this.l.stop('Token loaded')
-                        this.checkToken()
+                        this.l.stop('Token loaded');
+                        this.checkToken();
                     }
-                })
+                });
             } catch (_) {}
         }
         setInterval(
             () => {
-                this.checkToken()
+                this.checkToken();
             },
             10 * 60 * 1000,
-        )
+        );
     }
 
     async fetchToken(data: Token) {
-        const l = new Logger('TokenManager', 'yellow')
-        l.start('Fetching token...')
+        const l = new Logger('TokenManager', 'yellow');
+        l.start('Fetching token...');
 
         const request = await fetch('https://id.twitch.tv/oauth2/token', {
             method: 'POST',
@@ -87,53 +87,53 @@ export class TokenManager {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: `client_id=${env.APP_ID}&client_secret=${env.APP_SECRET}&code=${data.code}&grant_type=authorization_code&redirect_uri=${env.SERVER_URL}callback`,
-        })
+        });
 
         try {
-            const json = await request.json()
+            const json = await request.json();
 
-            const tokenData = grantToken.safeParse(json)
+            const tokenData = grantToken.safeParse(json);
 
             if (!tokenData.success) {
-                const error = errorResponse.safeParse(json)
+                const error = errorResponse.safeParse(json);
 
                 if (!error.success) {
-                    l.stopError(`Unable to parse token response: ${JSON.stringify(json)}`)
-                    return
+                    l.stopError(`Unable to parse token response: ${JSON.stringify(json)}`);
+                    return;
                 }
 
-                l.stopError(`Error while fetching token: ${error.data.message}`)
-                return
+                l.stopError(`Error while fetching token: ${error.data.message}`);
+                return;
             }
 
-            this.status = 'valid'
-            this.token = tokenData.data
+            this.status = 'valid';
+            this.token = tokenData.data;
 
-            writeFileSync('token.json', JSON.stringify(tokenData.data))
+            writeFileSync('token.json', JSON.stringify(tokenData.data));
 
-            l.stop('Token fetched')
+            l.stop('Token fetched');
         } catch (e) {
-            l.stopError(`Unable to parse token response: ${e}`)
+            l.stopError(`Unable to parse token response: ${e}`);
         }
     }
 
     private async checkToken() {
-        if (this.token === null) return
-        this.l.start("Checking token's validity...")
+        if (this.token === null) return;
+        this.l.start("Checking token's validity...");
 
         if (this.token.expires_in < Date.now() + 30 * 60 * 1000) {
-            this.l.start('Refreshing token...')
+            this.l.start('Refreshing token...');
             if (await this.refreshToken()) {
-                this.l.stop('Token refreshed')
+                this.l.stop('Token refreshed');
             } else {
-                this.l.stopError('Token refresh failed')
+                this.l.stopError('Token refresh failed');
             }
 
-            return
+            return;
         }
 
-        this.l.stop('Token is valid')
-        this.status = 'valid'
+        this.l.stop('Token is valid');
+        this.status = 'valid';
     }
 
     private async refreshToken() {
@@ -143,30 +143,30 @@ export class TokenManager {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: `client_id=${env.APP_ID}&client_secret=${env.APP_SECRET}&grant_type=refresh_token&refresh_token=${this.token?.refresh_token}`,
-        })
+        });
 
         try {
-            const json = await request.json()
+            const json = await request.json();
 
-            const tokenData = grantToken.safeParse(json)
+            const tokenData = grantToken.safeParse(json);
 
             if (!tokenData.success) {
-                const error = errorResponse.safeParse(json)
+                const error = errorResponse.safeParse(json);
 
                 if (!error.success) {
-                    this.l.error(`Unable to parse token response: ${JSON.stringify(json)}`)
-                    return false
+                    this.l.error(`Unable to parse token response: ${JSON.stringify(json)}`);
+                    return false;
                 }
 
-                this.l.error(`Error while fetching token: ${error.data.message}`)
-                return false
+                this.l.error(`Error while fetching token: ${error.data.message}`);
+                return false;
             }
 
-            this.token = tokenData.data
-            writeFileSync('token.json', JSON.stringify(tokenData.data))
+            this.token = tokenData.data;
+            writeFileSync('token.json', JSON.stringify(tokenData.data));
         } catch (e) {
-            this.l.error(`Unable to parse token response: ${e}`)
-            return false
+            this.l.error(`Unable to parse token response: ${e}`);
+            return false;
         }
     }
 
@@ -176,47 +176,47 @@ export class TokenManager {
                 headers: {
                     Authorization: `OAuth ${token}`,
                 },
-            })
+            });
             try {
-                const json = await request.json()
+                const json = await request.json();
 
-                const tokenData = tokenValidation.safeParse(json)
+                const tokenData = tokenValidation.safeParse(json);
 
                 if (!tokenData.success) {
-                    const error = errorResponse.safeParse(json)
+                    const error = errorResponse.safeParse(json);
 
                     if (!error.success) {
-                        this.l.error(`Unable to parse token validation response: ${JSON.stringify(json)}`)
-                        return false
+                        this.l.error(`Unable to parse token validation response: ${JSON.stringify(json)}`);
+                        return false;
                     }
 
-                    this.l.error(`Error while validating token: ${error.data.message}`)
-                    return false
+                    this.l.error(`Error while validating token: ${error.data.message}`);
+                    return false;
                 }
 
-                const { client_id, scopes, expires_in, user_id } = tokenData.data
+                const { client_id, scopes, expires_in, user_id } = tokenData.data;
 
-                this.user_id = user_id
+                this.user_id = user_id;
 
                 if (client_id !== env.APP_ID) {
-                    this.l.error(`Invalid client id: ${client_id}`)
-                    return
+                    this.l.error(`Invalid client id: ${client_id}`);
+                    return;
                 }
 
-                this.token.scope = scopes
-                this.token.expires_in = Date.now() + expires_in * 1000
-                return true
+                this.token.scope = scopes;
+                this.token.expires_in = Date.now() + expires_in * 1000;
+                return true;
             } catch (e) {
-                this.l.error(`Unable to parse token validation response: ${e}`)
-                return false
+                this.l.error(`Unable to parse token validation response: ${e}`);
+                return false;
             }
         }
 
-        return false
+        return false;
     }
 
     getToken() {
-        if (this.token === null) return null
-        return this.token.access_token
+        if (this.token === null) return null;
+        return this.token.access_token;
     }
 }

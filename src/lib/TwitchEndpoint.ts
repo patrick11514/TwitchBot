@@ -1,6 +1,6 @@
-import { z } from 'zod'
-import { env } from '../types/env'
-import { broadcasterId, server } from './TwitchClient/main'
+import { z } from 'zod';
+import { env } from '../types/env';
+import { broadcasterId, server } from './TwitchClient/main';
 
 const twitchEndpoint = async <T extends true | false>(
     endpoint: string,
@@ -14,25 +14,25 @@ const twitchEndpoint = async <T extends true | false>(
               | undefined
               | true
               | {
-                    status: number
-                    statusText: string
-                    message: string
+                    status: number;
+                    statusText: string;
+                    message: string;
                 }
         :
               | undefined
               | true
               | {
-                    data: unknown
+                    data: unknown;
                 }
               | {
-                    status: number
-                    statusText: string
-                    message: string
+                    status: number;
+                    statusText: string;
+                    message: string;
                 }
 > => {
-    const token = server.getToken()
+    const token = server.getToken();
 
-    if (!token) return undefined
+    if (!token) return undefined;
 
     const options: RequestInit = {
         method,
@@ -41,32 +41,32 @@ const twitchEndpoint = async <T extends true | false>(
             Authorization: 'Bearer ' + token,
             'Content-Type': 'application/json',
         },
-    }
+    };
 
     if (method != 'GET') {
-        options.body = JSON.stringify(data)
+        options.body = JSON.stringify(data);
     }
 
-    const request = await fetch(endpoint, options)
+    const request = await fetch(endpoint, options);
 
-    const text = await request.text()
+    const text = await request.text();
 
-    if (text == '' && request.status == okCode) return true
+    if (text == '' && request.status == okCode) return true;
 
     try {
-        const json = JSON.parse(text)
+        const json = JSON.parse(text);
 
-        if (request.status == okCode && returnData === true) return json
+        if (request.status == okCode && returnData === true) return json;
 
         return {
             status: request.status,
             statusText: request.statusText,
             message: json.message,
-        }
+        };
     } catch (_) {
-        return undefined
+        return undefined;
     }
-}
+};
 
 export const TwitchUserDetailSchema = z.array(
     z.object({
@@ -82,9 +82,9 @@ export const TwitchUserDetailSchema = z.array(
         email: z.string().optional(),
         created_at: z.string(),
     }),
-)
+);
 
-type EndpointList = { [key: string]: EndpointList | Function }
+type EndpointList = { [key: string]: EndpointList | Function };
 
 export const endpoints = {
     vip: {
@@ -98,7 +98,7 @@ export const endpoints = {
                 204,
                 'POST',
                 false,
-            )
+            );
         },
         remove: async (userId: string) => {
             return twitchEndpoint(
@@ -110,7 +110,7 @@ export const endpoints = {
                 204,
                 'DELETE',
                 false,
-            )
+            );
         },
     },
     getChannelInfo: async (userName: string | string[]) => {
@@ -120,7 +120,7 @@ export const endpoints = {
             200,
             'GET',
             true,
-        )
+        );
     },
     chat: {
         ban: async (moderatorId: string, userId: string, duration?: number, reason?: string) => {
@@ -136,7 +136,7 @@ export const endpoints = {
                 200,
                 'POST',
                 false,
-            )
+            );
         },
     },
-} satisfies EndpointList
+} satisfies EndpointList;

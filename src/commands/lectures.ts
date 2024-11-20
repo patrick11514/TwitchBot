@@ -1,50 +1,50 @@
-import { parseCommand } from '../lib/utils'
-import { Event } from '../loader'
-import { db } from '../types/connection'
+import { parseCommand } from '../lib/utils';
+import { Event } from '../loader';
+import { db } from '../types/connection';
 
 export const events: Event<any>[] = [
     new Event('message', async (msg) => {
-        const cmd = parseCommand(msg.message)
+        const cmd = parseCommand(msg.message);
 
-        if (!cmd) return
+        if (!cmd) return;
 
-        const { command, args } = cmd
+        const { command, args } = cmd;
 
         switch (command.toLowerCase()) {
             case 'lectures': {
-                const lectures = await db.selectFrom('lectures').selectAll().execute()
-                let message = 'Zde jsou všechny lekce: '
-                let i = 1
+                const lectures = await db.selectFrom('lectures').selectAll().execute();
+                let message = 'Zde jsou všechny lekce: ';
+                let i = 1;
                 for (const lecture of lectures) {
-                    const line = `${lecture.id}. ${lecture.name} - ${lecture.link} , `
+                    const line = `${lecture.id}. ${lecture.name} - ${lecture.link} , `;
 
                     if (message.length + line.length >= 500 - 100) {
-                        msg.reply(message)
-                        message = ''
+                        msg.reply(message);
+                        message = '';
                     }
 
-                    message += line
-                    ++i
+                    message += line;
+                    ++i;
                 }
 
-                msg.reply(message)
+                msg.reply(message);
 
-                break
+                break;
             }
             case 'addlecture': {
-                if (!msg.user.isMod && !msg.user.isBroadcaster) return
+                if (!msg.user.isMod && !msg.user.isBroadcaster) return;
 
-                if (args.length < 2) return msg.reply('Usage: !addLecture name string')
+                if (args.length < 2) return msg.reply('Usage: !addLecture name string');
 
-                const name = args.slice(0, args.length - 1).join(' ')
-                const link = args[args.length - 1]
+                const name = args.slice(0, args.length - 1).join(' ');
+                const link = args[args.length - 1];
 
                 const lastId = await db
                     .selectFrom('lectures')
                     .select('id')
                     .limit(1)
                     .orderBy('id', 'desc')
-                    .executeTakeFirst()
+                    .executeTakeFirst();
 
                 await db
                     .insertInto('lectures')
@@ -53,23 +53,25 @@ export const events: Event<any>[] = [
                         name,
                         link,
                     })
-                    .execute()
+                    .execute();
 
-                msg.reply('Added new lecture')
+                msg.reply('Added new lecture');
+                break;
             }
             case 'getlecture': {
-                if (args.length < 1) return msg.reply('Usage: !getLecture id')
+                if (args.length < 1) return msg.reply('Usage: !getLecture id');
 
                 const lecture = await db
                     .selectFrom('lectures')
                     .selectAll()
                     .where('id', '=', Number(args[0]))
-                    .executeTakeFirst()
+                    .executeTakeFirst();
 
-                if (!lecture) return msg.reply(`No lecture with id: ${args[0]} found`)
+                if (!lecture) return msg.reply(`No lecture with id: ${args[0]} found`);
 
-                msg.reply(`${lecture.id}. ${lecture.name} - ${lecture.link}`)
+                msg.reply(`${lecture.id}. ${lecture.name} - ${lecture.link}`);
+                break;
             }
         }
     }),
-]
+];

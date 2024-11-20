@@ -1,6 +1,6 @@
-import { config } from 'dotenv'
-import { z } from 'zod'
-config()
+import { config } from 'dotenv';
+import { z } from 'zod';
+config();
 
 const schema = z.object({
     MYSQL_HOST: z.string(),
@@ -14,6 +14,6 @@ const schema = z.object({
     SERVER_PORT: z.coerce.number(),
     SERVER_URL: z.string(),
     TWITCH_DEBUG: z.coerce.number().default(0),
-})
+});
 
-export const env = schema.parse(process.env)
+export const env = schema.parse(process.env);

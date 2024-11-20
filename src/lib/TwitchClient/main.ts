@@ -1,44 +1,44 @@
-import { ChatClient } from '@kararty/dank-twitch-irc'
-import { env } from '../../types/env'
-import { BotManager } from '../BotManager'
-import { EventEmitter } from '../EventEmitter'
-import Logger from '../logger'
-import { Join } from './Events/Join'
-import { Leave } from './Events/Leave'
-import { ExpressServer } from './ExpressServer'
-import { CheerMessage } from './Message/CheerMessage'
-import { Message } from './Message/Message'
-import { ReplyMessage } from './Message/ReplyMessage'
+import { ChatClient } from '@kararty/dank-twitch-irc';
+import { env } from '../../types/env';
+import { BotManager } from '../BotManager';
+import { EventEmitter } from '../EventEmitter';
+import Logger from '../logger';
+import { Join } from './Events/Join';
+import { Leave } from './Events/Leave';
+import { ExpressServer } from './ExpressServer';
+import { CheerMessage } from './Message/CheerMessage';
+import { Message } from './Message/Message';
+import { ReplyMessage } from './Message/ReplyMessage';
 
 export type Events = {
-    message: (message: Message) => void
-    join: (join: Join) => void
-    leave: (leave: Leave) => void
-}
+    message: (message: Message) => void;
+    join: (join: Join) => void;
+    leave: (leave: Leave) => void;
+};
 
-export const broadcasterId = '167983954'
+export const broadcasterId = '167983954';
 
-export const server = new ExpressServer()
+export const server = new ExpressServer();
 
-export const debugLogger = new Logger('Debug', 'magenta', true)
+export const debugLogger = new Logger('Debug', 'magenta', true);
 
 type User = {
-    username: string
-    isBot: boolean
-}
+    username: string;
+    isBot: boolean;
+};
 
 export class TwitchClient extends EventEmitter<Events> {
-    client: ChatClient
-    l = new Logger('TwitchClient', 'blue')
-    private channel: string
-    botManager: BotManager
+    client: ChatClient;
+    l = new Logger('TwitchClient', 'blue');
+    private channel: string;
+    botManager: BotManager;
 
-    activeUsers: User[] = []
+    activeUsers: User[] = [];
 
     constructor(channel: string) {
-        super()
+        super();
 
-        this.botManager = new BotManager(this)
+        this.botManager = new BotManager(this);
 
         this.client = new ChatClient({
             username: env.TWITCH_USERNAME,
@@ -49,83 +49,83 @@ export class TwitchClient extends EventEmitter<Events> {
             },
             ignoreUnhandledPromiseRejections: true,
             requestMembershipCapability: true,
-        })
+        });
 
-        this.l.start('Connecting to Twitch IRC')
+        this.l.start('Connecting to Twitch IRC');
 
         this.client.on('connect', () => {
-            this.l.stop('Connected to Twitch IRC')
-        })
+            this.l.stop('Connected to Twitch IRC');
+        });
 
-        this.initializeEvents()
+        this.initializeEvents();
 
-        this.client.connect()
-        this.client.join(channel)
-        this.channel = channel
+        this.client.connect();
+        this.client.join(channel);
+        this.channel = channel;
     }
 
     private initializeEvents() {
-        this.messageEvent()
-        this.joinEvent()
-        this.leaveEvent()
+        this.messageEvent();
+        this.joinEvent();
+        this.leaveEvent();
     }
 
     private messageEvent() {
         this.client.on('PRIVMSG', (msg) => {
-            let message: Message
+            let message: Message;
 
             if (msg.isCheer()) {
-                message = new CheerMessage(msg, this)
+                message = new CheerMessage(msg, this);
             } else if (msg.isReply()) {
-                message = new ReplyMessage(msg, this)
+                message = new ReplyMessage(msg, this);
             } else {
-                message = new Message(msg, this)
+                message = new Message(msg, this);
             }
 
             if (env.TWITCH_DEBUG) {
-                debugLogger.log(message)
+                debugLogger.log(message);
             }
 
-            this.emit('message', message)
-        })
+            this.emit('message', message);
+        });
     }
 
     private joinEvent() {
         this.client.on('JOIN', (data) => {
-            const join = new Join(data, this)
+            const join = new Join(data, this);
 
             if (env.TWITCH_DEBUG) {
-                debugLogger.log(join)
+                debugLogger.log(join);
             }
 
             this.activeUsers.push({
                 username: data.joinedUsername,
                 isBot: this.botManager.isBot(data.joinedUsername),
-            })
+            });
 
-            this.emit('join', join)
-        })
+            this.emit('join', join);
+        });
     }
 
     private leaveEvent() {
         this.client.on('PART', (data) => {
-            const leave = new Leave(data, this)
+            const leave = new Leave(data, this);
 
             if (env.TWITCH_DEBUG) {
-                debugLogger.log(leave)
+                debugLogger.log(leave);
             }
 
-            this.activeUsers = this.activeUsers.filter((user) => user.username !== data.partedUsername)
+            this.activeUsers = this.activeUsers.filter((user) => user.username !== data.partedUsername);
 
-            this.emit('leave', leave)
-        })
+            this.emit('leave', leave);
+        });
     }
 
     reply(messageId: string, message: string) {
-        this.client.reply(this.channel, messageId, message)
+        this.client.reply(this.channel, messageId, message);
     }
 
     send(message: string) {
-        this.client.say(this.channel, message)
+        this.client.say(this.channel, message);
     }
 }

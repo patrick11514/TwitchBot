@@ -1,7 +1,7 @@
-import { JoinMessage } from '@kararty/dank-twitch-irc'
-import { z } from 'zod'
-import { TwitchClient } from '../main'
-import { BaseEvent } from './baseEvent'
+import { JoinMessage } from '@kararty/dank-twitch-irc';
+import { z } from 'zod';
+import { TwitchClient } from '../main';
+import { BaseEvent } from './baseEvent';
 
 const schema = z.array(
     z.object({
@@ -17,14 +17,14 @@ const schema = z.array(
         email: z.string().optional(),
         created_at: z.string(),
     }),
-)
+);
 
 export class Join extends BaseEvent {
-    readonly channel: string
+    readonly channel: string;
 
     constructor(message: JoinMessage, client: TwitchClient) {
-        super(message.joinedUsername, client, 'JoinEvent')
+        super(message.joinedUsername, client, 'JoinEvent');
 
-        this.channel = message.channelName
+        this.channel = message.channelName;
     }
 }

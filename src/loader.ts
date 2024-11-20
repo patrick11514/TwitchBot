@@ -1,6 +1,6 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import { Events } from './lib/TwitchClient/main'
+import fs from 'node:fs';
+import path from 'node:path';
+import { Events } from './lib/TwitchClient/main';
 
 export class Event<T extends keyof Events> {
     constructor(
@@ -12,7 +12,7 @@ export class Event<T extends keyof Events> {
         return {
             name: this.eventName,
             callback: this.callback,
-        }
+        };
     }
 }
 
@@ -20,27 +20,27 @@ export const exportedEvents = fs
     .readdirSync(path.join(__dirname, 'commands'))
     .filter((file) => file.endsWith('.ts') || file.endsWith('.js'))
     .map((file) => {
-        const exp = require(path.join(__dirname, 'commands', file)) as unknown
+        const exp = require(path.join(__dirname, 'commands', file)) as unknown;
 
         if (!exp) {
-            throw new Error(`File ${file} does not export anything`)
+            throw new Error(`File ${file} does not export anything`);
         }
 
         if (typeof exp !== 'object') {
-            throw new Error(`File ${file} does not export object`)
+            throw new Error(`File ${file} does not export object`);
         }
 
         if (!('events' in exp)) {
-            throw new Error(`File ${file} does not export events`)
+            throw new Error(`File ${file} does not export events`);
         }
 
         if (!Array.isArray(exp.events)) {
-            throw new Error(`File ${file} does not export events as array`)
+            throw new Error(`File ${file} does not export events as array`);
         }
 
         if (!exp.events.every((event) => event instanceof Event)) {
-            throw new Error(`File ${file} does not export events as array of Event`)
+            throw new Error(`File ${file} does not export events as array of Event`);
         }
 
-        return exp.events as Event<any>[]
-    })
+        return exp.events as Event<any>[];
+    });

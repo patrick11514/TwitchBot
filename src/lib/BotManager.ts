@@ -1,66 +1,66 @@
-import { db } from '../types/connection'
-import { Bots } from '../types/database'
-import { TwitchClient } from './TwitchClient/main'
-import { TwitchUserDetailSchema, endpoints } from './TwitchEndpoint'
-import Logger from './logger'
+import { db } from '../types/connection';
+import { Bots } from '../types/database';
+import { TwitchClient } from './TwitchClient/main';
+import { TwitchUserDetailSchema, endpoints } from './TwitchEndpoint';
+import Logger from './logger';
 
 export class BotManager {
-    bots: Bots[] = []
-    private client: TwitchClient
-    private l = new Logger('BotManager', 'magenta')
+    bots: Bots[] = [];
+    private client: TwitchClient;
+    private l = new Logger('BotManager', 'magenta');
 
     constructor(client: TwitchClient) {
-        this.client = client
+        this.client = client;
 
-        this.l.start('Initializing BotManager..')
+        this.l.start('Initializing BotManager..');
 
-        this.init()
+        this.init();
     }
 
     private async init() {
-        const data = await db.selectFrom('bots').selectAll().execute()
+        const data = await db.selectFrom('bots').selectAll().execute();
 
-        this.bots = data
+        this.bots = data;
     }
 
     isBot(idOrUsername: string) {
         if (this.bots.find((bot) => bot.username === idOrUsername.toLocaleLowerCase() || bot.id === idOrUsername))
-            return true
+            return true;
 
-        return false
+        return false;
     }
 
     includes(username: string) {
-        return Boolean(this.bots.find((bot) => bot.username === username.toLowerCase()))
+        return Boolean(this.bots.find((bot) => bot.username === username.toLowerCase()));
     }
 
     async add(username: string) {
-        const data = await endpoints.getChannelInfo(username)
+        const data = await endpoints.getChannelInfo(username);
 
         if (data === undefined) {
-            this.l.error(`Failed to fetch username: ${username}, because of invalid token`)
-            return false
+            this.l.error(`Failed to fetch username: ${username}, because of invalid token`);
+            return false;
         }
 
         if (data === true) {
-            return false
+            return false;
         }
 
         if (!('data' in data)) {
-            this.l.error(`Failed to fetch username: ${username}, ${JSON.stringify(data)}`)
-            return false
+            this.l.error(`Failed to fetch username: ${username}, ${JSON.stringify(data)}`);
+            return false;
         }
 
-        const parsed = TwitchUserDetailSchema.safeParse(data.data)
+        const parsed = TwitchUserDetailSchema.safeParse(data.data);
 
         if (!parsed.success) {
-            this.l.error(parsed.error)
-            return false
+            this.l.error(parsed.error);
+            return false;
         }
 
         if (parsed.data.length === 0) {
-            this.l.error(`Failed to fetch username: ${username}, because of invalid username`)
-            return false
+            this.l.error(`Failed to fetch username: ${username}, because of invalid username`);
+            return false;
         }
 
         const inserted = await db
@@ -69,36 +69,36 @@ export class BotManager {
                 id: parsed.data[0].id,
                 username: parsed.data[0].login,
             })
-            .executeTakeFirst()
+            .executeTakeFirst();
 
         if (inserted.numInsertedOrUpdatedRows == 0n) {
-            this.l.error(`Failed to add bot ${username} to database`)
-            return false
+            this.l.error(`Failed to add bot ${username} to database`);
+            return false;
         }
 
         this.bots.push({
             id: parsed.data[0].id,
             username: parsed.data[0].login,
-        })
+        });
 
-        this.syncBots()
+        this.syncBots();
 
-        return true
+        return true;
     }
 
     async remove(username: string) {
-        const removed = await db.deleteFrom('bots').where('username', '=', username).executeTakeFirst()
+        const removed = await db.deleteFrom('bots').where('username', '=', username).executeTakeFirst();
 
         if (removed.numDeletedRows == 0n) {
-            this.l.error(`Failed to remove bot ${username} from database`)
-            return false
+            this.l.error(`Failed to remove bot ${username} from database`);
+            return false;
         }
 
-        this.bots = this.bots.filter((bot) => bot.username !== username)
+        this.bots = this.bots.filter((bot) => bot.username !== username);
 
-        this.syncBots()
+        this.syncBots();
 
-        return true
+        return true;
     }
 
     syncBots() {
@@ -106,7 +106,7 @@ export class BotManager {
             return {
                 username: user.username,
                 isBot: this.isBot(user.username),
-            }
-        })
+            };
+        });
     }
 }
