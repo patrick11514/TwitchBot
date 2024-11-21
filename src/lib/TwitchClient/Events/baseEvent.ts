@@ -5,7 +5,7 @@ import { TwitchClient } from '../main';
 
 export class BaseEvent {
     user: PartialUser | undefined;
-    private username: string;
+    readonly username: string;
     private l: Logger;
     readonly client: TwitchClient;
 

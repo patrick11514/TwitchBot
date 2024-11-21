@@ -14,7 +14,8 @@ let lastSeenKozzy: number | undefined = undefined;
 
 export const events: Event<any>[] = [
     new Event('join', async (user) => {
-        if (user.channel !== NAME) return;
+        if (user.username !== NAME) return;
+
         user.client.send(messages[Math.floor(Math.random() * messages.length)]);
         lastSeenKozzy = Date.now();
     }),
@@ -26,7 +27,7 @@ export const events: Event<any>[] = [
         lastSeenKozzy = Date.now();
     }),
     new Event('leave', async (user) => {
-        if (user.channel !== NAME) return;
+        if (user.username !== NAME) return;
 
         lastSeenKozzy = undefined;
     }),
