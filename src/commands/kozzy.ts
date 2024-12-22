@@ -15,6 +15,7 @@ let lastSeenKozzy: number | undefined = undefined;
 export const events: Event<any>[] = [
     new Event('join', async (user) => {
         if (user.username !== NAME) return;
+        if (lastSeenKozzy !== undefined) return;
 
         user.client.send(messages[Math.floor(Math.random() * messages.length)]);
         lastSeenKozzy = Date.now();
