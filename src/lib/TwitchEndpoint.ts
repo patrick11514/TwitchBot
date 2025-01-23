@@ -138,5 +138,14 @@ export const endpoints = {
                 false,
             );
         },
+        remove: async (moderatorId: string, messageId: string) => {
+            return twitchEndpoint(
+                `https://api.twitch.tv/helix/moderation/chat/?broadcaster_id=${broadcasterId}&moderator_id=${moderatorId}&message_id=${messageId}`,
+                {},
+                200,
+                'DELETE',
+                false,
+            );
+        },
     },
 } satisfies EndpointList;
